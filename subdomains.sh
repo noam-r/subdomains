@@ -14,10 +14,6 @@ usage()
     echo "usage: ${0##*/} -d domain.tld [-f file.txt]"
 }
 
-if [ -z $1 ] ; then
-  usage && exit 1;
-fi
-
 while [ "$1" != "" ]; do
     case $1 in
         -d | --domain )         shift
@@ -35,6 +31,7 @@ while [ "$1" != "" ]; do
     shift
 done
 
+[[ -z $DOMAIN ]] && usage && exit 1
 [[ ! -f $SUBDOMAINFILE ]] && echo "Cannot read subdomain file" && exit 1
 
 echo "Scanning $DOMAIN"

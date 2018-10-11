@@ -4,7 +4,7 @@ Stupid Subdomain Detector is a small bash script that bute-checks the existance 
 
 Usage:
 ```sh
-$ ssd.sh -d domain.com [-f subDomainFile.txt]
+$ ./subdomains.sh -d domain.com [-f subDomainFile.txt]
 ```
 
   - domain (-d) is required

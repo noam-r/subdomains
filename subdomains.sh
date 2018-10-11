@@ -14,6 +14,10 @@ usage()
     echo "usage: ${0##*/} -d domain.tld [-f file.txt]"
 }
 
+if [ -z $1 ] ; then
+  usage && exit 1;
+fi
+
 while [ "$1" != "" ]; do
     case $1 in
         -d | --domain )         shift
@@ -41,8 +45,8 @@ ip=$(dig +short $DOMAIN)
 while read subdomain; do
   [[ -z "$subdomain" ]] && continue
   full=$subdomain.$DOMAIN
-  ip=$(dig +short $full)
-  [[ ! -z "$ip" ]] && echo "FOUND $full"
+  ip=$(dig +short $full | tr '\n' ' ')
+  [[ ! -z "$ip" ]] && [[ ! $ip =~ ^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.) ]] && printf "FOUND %-25s %s\n" "$full" "$ip"
 done <$SUBDOMAINFILE
 
 echo "All done"

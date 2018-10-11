@@ -38,6 +38,11 @@ echo "Scanning $DOMAIN"
 ip=$(dig +short $DOMAIN)
 [[ ! -z "$ip" ]] && echo "ip for $DOMAIN is $ip" || echo "$DOMAIN has no ip"
 
+# Check for catch-all subdomain, which will make the rest of the script redundant
+RANDOM_SUB=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+ip=$(dig +short RANDOM_SUB.$DOMAIN)
+[[ ! -z "$ip" ]] && echo "$DOMAIN catch-all subdomains is enabled" && exit 1
+
 while read subdomain; do
   [[ -z "$subdomain" ]] && continue
   full=$subdomain.$DOMAIN

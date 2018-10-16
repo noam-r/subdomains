@@ -31,6 +31,7 @@ while [ "$1" != "" ]; do
     shift
 done
 
+[[ -z $DOMAIN ]] && usage && exit 1
 [[ ! -f $SUBDOMAINFILE ]] && echo "Cannot read subdomain file" && exit 1
 
 echo "Scanning $DOMAIN"
@@ -46,8 +47,8 @@ ip=$(dig +short RANDOM_SUB.$DOMAIN)
 while read subdomain; do
   [[ -z "$subdomain" ]] && continue
   full=$subdomain.$DOMAIN
-  ip=$(dig +short $full)
-  [[ ! -z "$ip" ]] && echo "FOUND $full"
+  ip=$(dig +short $full | tr '\n' ' ')
+  [[ ! -z "$ip" ]] && [[ ! $ip =~ ^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.) ]] && printf "FOUND %-25s %s\n" "$full" "$ip"
 done <$SUBDOMAINFILE
 
 echo "All done"

@@ -8,6 +8,7 @@
 
 DOMAIN=
 SUBDOMAINFILE=./subdomains.txt
+OUTPUTLEVEL=all
 
 usage()
 {
@@ -20,7 +21,10 @@ while [ "$1" != "" ]; do
                                 DOMAIN=$1
                                 ;;
         -f | --subdomain-file ) shift
-				SUBDOMAINFILE=$1
+				                        SUBDOMAINFILE=$1
+                                ;;
+        -ol | --output-level )  shift
+                                OUTPUTLEVEL=$1
                                 ;;
         -h | --help )           usage
                                 exit
@@ -37,7 +41,7 @@ done
 echo "Scanning $DOMAIN"
 
 ip=$(dig +short $DOMAIN)
-[[ ! -z "$ip" ]] && echo "ip for $DOMAIN is $ip" || echo "$DOMAIN has no ip"
+[[ ! -z "$ip" ]] && printf "ip for $DOMAIN is $ip\n\n" || echo "$DOMAIN has no ip"
 
 # Check for catch-all subdomain, which will make the rest of the script redundant
 RANDOM_SUB=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
@@ -48,7 +52,17 @@ while read subdomain; do
   [[ -z "$subdomain" ]] && continue
   full=$subdomain.$DOMAIN
   ip=$(dig +short $full | tr '\n' ' ')
-  [[ ! -z "$ip" ]] && [[ ! $ip =~ ^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.) ]] && printf "FOUND %-25s %s\n" "$full" "$ip"
+
+  if [[ (! -z "$ip") && (! $ip =~ ^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)) ]]; then
+    if [ "$OUTPUTLEVEL" == "ip" ]; then
+      iponly=`echo $ip | awk '{print $NF}'`
+      printf "%s\n" "$iponly"
+    elif [ "$OUTPUTLEVEL" == "sub" ]; then
+      printf "%s\n" "$full"
+    else
+      printf "%-25s %s\n" "$full" "$ip"
+    fi
+  fi
 done <$SUBDOMAINFILE
 
 echo "All done"

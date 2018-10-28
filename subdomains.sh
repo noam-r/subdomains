@@ -38,15 +38,34 @@ done
 [[ -z $DOMAIN ]] && usage && exit 1
 [[ ! -f $SUBDOMAINFILE ]] && echo "Cannot read subdomain file" && exit 1
 
-echo "Scanning $DOMAIN"
+echo "* Scanning $DOMAIN"
 
 ip=$(dig +short $DOMAIN)
 [[ ! -z "$ip" ]] && printf "ip for $DOMAIN is $ip\n\n" || echo "$DOMAIN has no ip"
+
+# Check for zone-transfer, you never know
+NSS=($(dig NS $DOMAIN +short))
+for NS in "${NSS[@]}"
+do
+  echo "* Checking Nameserver $NS for zone-transfer"
+  RESULTS=($(dig axfr @$NS $DOMAIN +short))
+  if ((${#RESULTS[@]}>5)); then
+	echo "FOUND using: dig axfr @$NS $DOMAIN - have fun"
+	echo $(dig axfr @$NS $DOMAIN)
+	exit
+  fi
+done
+
+echo "* No zone-transfer found on all nameservers, moving on"
 
 # Check for catch-all subdomain, which will make the rest of the script redundant
 RANDOM_SUB=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
 ip=$(dig +short RANDOM_SUB.$DOMAIN)
 [[ ! -z "$ip" ]] && echo "$DOMAIN catch-all subdomains is enabled" && exit 1
+
+echo "* Catch-all subdomains is not enabled, moving on"
+
+echo "* Starting brute-force"
 
 while read subdomain; do
   [[ -z "$subdomain" ]] && continue

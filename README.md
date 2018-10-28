@@ -5,7 +5,7 @@ Stupid Subdomain Detector is a small bash script that bute-checks the existance 
 The scripts runs several checks on the domain:
 1. check it's up
 2. check for zone-transfer (you never know!)
-3. chceck for catch-all subdomain
+3. check for catch-all subdomain
 4. brute-force
 
 Usage:

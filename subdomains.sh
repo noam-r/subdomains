@@ -49,7 +49,8 @@ for NS in "${NSS[@]}"
 do
   echo "* Checking Nameserver $NS for zone-transfer"
   RESULTS=($(dig axfr @$NS $DOMAIN +short))
-  if ((${#RESULTS[@]}>5)); then
+  EXIT_CODE=$?
+  if [[ "${EXIT_CODE}" == "0" ]] && ((${#RESULTS[@]}>5)); then
 	echo "FOUND using: dig axfr @$NS $DOMAIN - have fun"
 
   if [ "$OUTPUTLEVEL" == "ip" ]; then

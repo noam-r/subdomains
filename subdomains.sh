@@ -58,23 +58,23 @@ NSS=($(dig NS $DOMAIN +short))
 for NS in "${NSS[@]}"
 do
   echo "* Checking Nameserver $NS for zone-transfer"
-  RESULTS=($(dig axfr @$NS $DOMAIN +short))
+  RESULTS=($(dig axfr @$NS $DOMAIN | egrep '^;; XFR size: [1-9]'))
   EXIT_CODE=$?
-  if [[ "${EXIT_CODE}" == "0" ]] && ((${#RESULTS[@]}>5)); then
+  if [[ "${EXIT_CODE}" == "0" ]]; then
 	echo "FOUND using: dig axfr @$NS $DOMAIN - have fun"
 
-  if [ "$OUTPUTLEVEL" == "ip" ]; then
-    awk_printf_prefix='$1=$4="";'
-    awk_condition='$4 == "A"'
-  elif [ "$OUTPUTLEVEL" == "sub" ]; then
-    awk_printf_prefix='$4=$5="";'
-    awk_condition=''
-  else
-    awk_printf_prefix=''
-    awk_condition=''
-  fi
-  printf "%s\n" "$(dig axfr @$NS $DOMAIN | sed '/^;/ d' | sort -k4 | awk "$awk_condition"' {'"$awk_printf_prefix"' printf "%-50s %-10s %s\n", $1, $4, $5}'| sed 's/^ *//;s/ *$//')"
-	exit
+    if [ "$OUTPUTLEVEL" == "ip" ]; then
+      awk_printf_prefix='$1=$4="";'
+      awk_condition='$4 == "A"'
+    elif [ "$OUTPUTLEVEL" == "sub" ]; then
+      awk_printf_prefix='$4=$5="";'
+      awk_condition=''
+    else
+      awk_printf_prefix=''
+      awk_condition=''
+    fi
+    printf "%s\n" "$(dig axfr @$NS $DOMAIN | sed '/^;/ d' | sort -k4 | awk "$awk_condition"' {'"$awk_printf_prefix"' printf "%-50s %-10s %s\n", $1, $4, $5}'| sed 's/^ *//;s/ *$//')"
+    exit
   fi
 done
 

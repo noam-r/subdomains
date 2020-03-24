@@ -84,8 +84,6 @@ RANDOM_SUB=$(hexdump -n 16 -e '4/4 "%08X" 1 "\n"' /dev/urandom)
 CATCHALL_IP=$(dig +short $RANDOM_SUB.$DOMAIN)
 [[ ! -z "$CATCHALL_IP" ]] && echo "$DOMAIN catch-all subdomains is enabled (${CATCHALL_IP})"
 
-echo "* Catch-all subdomains is not enabled, moving on"
-
 echo "* Starting brute-force"
 
 while read subdomain; do

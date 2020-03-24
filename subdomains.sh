@@ -70,10 +70,9 @@ done
 
 echo "* No zone-transfer found on all nameservers, moving on"
 
-# Check for catch-all subdomain, which will make the rest of the script redundant
 RANDOM_SUB=$(hexdump -n 16 -e '4/4 "%08X" 1 "\n"' /dev/urandom)
-ip=$(dig +short $RANDOM_SUB.$DOMAIN)
-[[ ! -z "$ip" ]] && echo "$DOMAIN catch-all subdomains is enabled" && exit 1
+CATCHALL_IP=$(dig +short $RANDOM_SUB.$DOMAIN)
+[[ ! -z "$CATCHALL_IP" ]] && echo "$DOMAIN catch-all subdomains is enabled (${CATCHALL_IP})"
 
 echo "* Catch-all subdomains is not enabled, moving on"
 
@@ -84,14 +83,18 @@ while read subdomain; do
   full=$subdomain.$DOMAIN
   ip=$(dig +short $full | tr '\n' ' ')
 
-  if [[ (! -z "$ip") && (! $ip =~ ^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)) ]]; then
-    if [ "$OUTPUTLEVEL" == "ip" ]; then
-      iponly=`echo $ip | awk '{print $NF}'`
-      printf "%s\n" "$iponly"
-    elif [ "$OUTPUTLEVEL" == "sub" ]; then
-      printf "%s\n" "$full"
-    else
-      printf "%-25s %s\n" "$full" "$ip"
+  if [[ (! -z "$ip") ]]; then
+    iponly=`echo $ip | awk '{print $NF}'`
+    if [[ "${iponly}" != "${CATCHALL_IP}" ]]; then
+      if [[ (! $ip =~ ^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)) ]]; then
+        if [ "$OUTPUTLEVEL" == "ip" ]; then
+          printf "%s\n" "$iponly"
+        elif [ "$OUTPUTLEVEL" == "sub" ]; then
+          printf "%s\n" "$full"
+        else
+          printf "%-25s %s\n" "$full" "$ip"
+        fi
+      fi
     fi
   fi
 done <$SUBDOMAINFILE

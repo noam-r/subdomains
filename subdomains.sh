@@ -9,10 +9,18 @@
 DOMAIN=
 SUBDOMAINFILE=./subdomains.txt
 OUTPUTLEVEL=all
+SKIP_INTERNAL_IP=yes
 
 usage()
 {
-    echo "usage: ${0##*/} -d domain.tld [-f file.txt]"
+cat <<EOM
+usage: ${0##*/} [OPTIONS] -d domain.tld
+Options:
+  -f  | -subdomain-file <subdomains file>  Path to subdomains file. Each subdomain should be in a new line. Defaults to subdomains.txt.
+  -ol | --output-level  <all|ip|sub>       Output level. Defaults to all.
+  -si | --show-internal                    Show private subnets IPs. Defaults to false.
+  -h  | --help                             Print this message and exit.
+EOM
 }
 
 while [ "$1" != "" ]; do
@@ -25,6 +33,8 @@ while [ "$1" != "" ]; do
                                 ;;
         -ol | --output-level )  shift
                                 OUTPUTLEVEL=$1
+                                ;;
+        -si | --skip-internal ) SKIP_INTERNAL_IP=no
                                 ;;
         -h | --help )           usage
                                 exit
@@ -86,7 +96,7 @@ while read subdomain; do
   if [[ (! -z "$ip") ]]; then
     iponly=`echo $ip | awk '{print $NF}'`
     if [[ "${iponly}" != "${CATCHALL_IP}" ]]; then
-      if [[ (! $ip =~ ^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)) ]]; then
+      if [[ "${SKIP_INTERNAL_IP}" == "no" || (! $ip =~ ^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)) ]]; then
         if [ "$OUTPUTLEVEL" == "ip" ]; then
           printf "%s\n" "$iponly"
         elif [ "$OUTPUTLEVEL" == "sub" ]; then

@@ -70,8 +70,8 @@ done
 echo "* No zone-transfer found on all nameservers, moving on"
 
 # Check for catch-all subdomain, which will make the rest of the script redundant
-RANDOM_SUB=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
-ip=$(dig +short RANDOM_SUB.$DOMAIN)
+RANDOM_SUB=$(hexdump -n 16 -e '4/4 "%08X" 1 "\n"' /dev/urandom)
+ip=$(dig +short $RANDOM_SUB.$DOMAIN)
 [[ ! -z "$ip" ]] && echo "$DOMAIN catch-all subdomains is enabled" && exit 1
 
 echo "* Catch-all subdomains is not enabled, moving on"

@@ -82,7 +82,9 @@ echo "* No zone-transfer found on all nameservers, moving on"
 
 RANDOM_SUB=$(hexdump -n 16 -e '4/4 "%08X" 1 "\n"' /dev/urandom)
 CATCHALL_IP=$(dig +short $RANDOM_SUB.$DOMAIN)
-[[ ! -z "$CATCHALL_IP" ]] && echo "$DOMAIN catch-all subdomains is enabled (${CATCHALL_IP})"
+if [[ ! -z "$CATCHALL_IP" ]]; then
+  echo "$DOMAIN catch-all subdomains is enabled (${CATCHALL_IP})"
+fi
 
 echo "* Starting brute-force"
 
@@ -93,15 +95,25 @@ while read subdomain; do
 
   if [[ (! -z "$ip") ]]; then
     iponly=`echo $ip | awk '{print $NF}'`
-    if [[ "${iponly}" != "${CATCHALL_IP}" ]]; then
-      if [[ "${SKIP_INTERNAL_IP}" == "no" || (! $ip =~ ^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)) ]]; then
-        if [ "$OUTPUTLEVEL" == "ip" ]; then
-          printf "%s\n" "$iponly"
-        elif [ "$OUTPUTLEVEL" == "sub" ]; then
-          printf "%s\n" "$full"
-        else
-          printf "%-25s %s\n" "$full" "$ip"
+    if [[ ! -z "$CATCHALL_IP" ]]; then
+      _IS_CATCHALL_IP=0
+      for _CATCHALL_IP in "${CATCHALL_IP[@]}"; do
+        if [[ "${_CATCHALL_IP}" == "${iponly}" ]]; then
+          _IS_CATCHALL_IP=1
+          break
         fi
+      done
+      if [[ "${_IS_CATCHALL_IP}" == "1" ]]; then
+        continue;
+      fi
+    fi
+    if [[ "${SKIP_INTERNAL_IP}" == "no" || (! $ip =~ ^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)) ]]; then
+      if [ "$OUTPUTLEVEL" == "ip" ]; then
+        printf "%s\n" "$iponly"
+      elif [ "$OUTPUTLEVEL" == "sub" ]; then
+        printf "%s\n" "$full"
+      else
+        printf "%-25s %s\n" "$full" "$ip"
       fi
     fi
   fi
